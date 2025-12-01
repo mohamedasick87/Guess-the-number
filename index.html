@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Guess the Number</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #6c63ff 0%, #66e6ff 100%);
+      --card-bg: #ffffffee;
+      --primary: #6c63ff;
+      --primary-soft: #ecebff;
+      --danger: #ff4b6a;
+      --text-main: #1f2933;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.18);
+      --radius-lg: 18px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      width: 100vw;
+      background: var(--bg-gradient);
+      font-family: "Josefin Sans", system-ui, sans-serif;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    /* background soft blobs */
+    .bg-blur {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(6px);
+      opacity: 0.22;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob1 {
+      width: 360px;
+      height: 360px;
+      background: #8eb5e7;
+      top: -80px;
+      left: -80px;
+    }
+    .blob2 {
+      width: 320px;
+      height: 320px;
+      background: #a2ffe0;
+      bottom: -120px;
+      right: -60px;
+    }
+
+    /* animated center title */
+    .page-title {
+      position: relative;
+      z-index: 1;
+      font-size: 1.7rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #fdfbff;
+      text-shadow: 0 0 12px rgba(255,255,255,0.45);
+      margin-bottom: 10px;
+      animation: titlePulse 3.2s ease-in-out infinite;
+      text-align: center;
+    }
+
+    @keyframes titlePulse {
+      0%   { transform: translateY(0) scale(1);   opacity: 0.8; text-shadow: 0 0 10px rgba(255,255,255,0.35); }
+      50%  { transform: translateY(-2px) scale(1.04); opacity: 1;   text-shadow: 0 0 18px rgba(255,255,255,0.75); }
+      100% { transform: translateY(0) scale(1);   opacity: 0.9; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
+    }
+
+    /* main wrapper that is always centered */
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      width: min(1100px, 100vw - 40px);
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+
+    /* cartoon */
+    .cartoon {
+      width: 150px;
+      min-width: 120px;
+      animation: float 3.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(20px); }
+    }
+
+    #cartoon-hand {
+      transform-box: fill-box;
+      transform-origin: 65% 55%;
+      animation: wave 1.4s infinite linear alternate;
+    }
+
+    @keyframes wave {
+      0% { transform: rotate(-6deg); }
+      100% { transform: rotate(30deg); }
+    }
+
+    /* card */
+    .card {
+      flex: 1;
+      max-width: 720px;
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      padding: 32px 40px 26px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      transform: translateY(30px) scale(0.98);
+      animation: cardIn 0.7s cubic-bezier(.47,.98,.43,1.4) 0.15s forwards;
+    }
+
+    @keyframes cardIn {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .badge {
+      font-size: 0.9rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .subtitle span {
+      font-weight: 500;
+      color: var(--primary);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .input-row input[type="number"] {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      font-size: 1rem;
+      text-align: center;
+      outline: none;
+      background: #f9fafb;
+      transition: border 0.18s, box-shadow 0.18s, transform 0.08s, background 0.18s;
+    }
+
+    .input-row input[type="number"]:focus {
+      border-color: var(--primary);
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.18);
+    }
+
+    .input-row input[type="number"]:active {
+      transform: scale(0.99);
+    }
+
+    .input-row input::-webkit-inner-spin-button,
+    .input-row input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      font-size: 0.98rem;
+      font-weight: 500;
+      padding: 11px 20px;
+      transition: background 0.17s, transform 0.11s, box-shadow 0.14s;
+    }
+
+    #checkBtn {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 10px 25px rgba(108, 99, 255, 0.22);
+      white-space: nowrap;
+    }
+
+    #checkBtn:hover {
+      background: #5a52f2;
+      transform: scale(1.06);
+      box-shadow: 0 16px 32px rgba(108, 99, 255, 0.26);
+    }
+
+    #checkBtn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    #resetBtn {
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 0;
+      margin-top: 4px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      box-shadow: none;
+    }
+
+    #resetBtn:hover {
+      color: var(--primary);
+    }
+
+    .result {
+      margin-top: 10px;
+      font-size: 0.98rem;
+      min-height: 22px;
+      transition: color 0.23s, transform 0.18s;
+    }
+
+    .result.success {
+      color: #16a34a;
+      animation: pop 0.35s cubic-bezier(.97,-0.23,.3,1.53);
+    }
+
+    .result.error {
+      color: var(--danger);
+      animation: shake 0.3s;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(1.18); }
+      80% { transform: scale(0.97); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      50% { transform: translateX(8px); }
+      75% { transform: translateX(-4px); }
+      100% { transform: translateX(0); }
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .footer {
+      margin-top: 18px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f4f4ff;
+      color: var(--primary);
+    }
+
+    /* copyright footer */
+    .site-footer {
+      margin-top: 18px;
+      padding: 8px 0 12px;
+      width: 100%;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #e5e9ff;
+      opacity: 0.85;
+    }
+
+    /* tablet */
+    @media (max-width: 900px) {
+      .wrapper {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+      }
+
+      .cartoon {
+        width: 120px;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 95vw;
+        padding: 24px 22px 18px;
+      }
+
+      .title {
+        font-size: 1.5rem;
+      }
+    }
+
+    /* mobile */
+    @media (max-width: 520px) {
+      .wrapper {
+        width: 100%;
+        padding: 14px;
+      }
+
+      .cartoon {
+        width: 90px;
+      }
+
+      .card {
+        max-width: 100%;
+        padding: 18px 14px 14px;
+      }
+
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .input-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .title {
+        font-size: 1.2rem;
+      }
+
+      .subtitle {
+        font-size: 0.85rem;
+      }
+
+      .bg-blur {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blur blob1"></div>
+  <div class="bg-blur blob2"></div>
+
+  <h2 class="page-title">Lucks got me</h2>
+
+  <div class="wrapper">
+    <!-- Cartoon SVG -->
+    <div class="cartoon">
+      <svg viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="172" rx="28" ry="7" fill="#000" opacity="0.13"/>
+        <ellipse cx="60" cy="56" rx="40" ry="36" fill="#ffeda3" stroke="#d8ba6b" stroke-width="2.7"/>
+        <ellipse cx="24" cy="65" rx="8" ry="11" fill="#ffe492" stroke="#d8ba6b" stroke-width="2"/>
+        <ellipse cx="96" cy="66" rx="8" ry="11" fill="#ffe492" stroke="#d8ba6b" stroke-width="2"/>
+        <g id="cartoon-hand">
+          <ellipse cx="15" cy="128" rx="8" ry="16" fill="#ffe492" stroke="#d8ba6b" stroke-width="2"/>
+          <ellipse cx="17" cy="144" rx="8" ry="7" fill="#ffe492" stroke="#d8ba6b" stroke-width="2"/>
+        </g>
+        <ellipse cx="59" cy="120" rx="38" ry="40" fill="#ffd6d6" stroke="#eaa1a1" stroke-width="3"/>
+        <ellipse cx="105" cy="132" rx="8" ry="16" fill="#ffe492" stroke="#d8ba6b" stroke-width="2"/>
+        <ellipse cx="103" cy="150" rx="8" ry="7" fill="#ffe492" stroke="#d8ba6b" stroke-width="2"/>
+        <path d="M50 65 Q60 80 70 65" stroke="#7a593d" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <ellipse cx="60" cy="62" rx="8" ry="4.5" fill="#ffd18c"/>
+        <ellipse cx="45" cy="53" rx="5" ry="6" fill="#fff"/>
+        <ellipse cx="75" cy="53" rx="5" ry="6" fill="#fff"/>
+        <ellipse cx="45" cy="53" rx="2.1" ry="2.7" fill="#6c63ff"/>
+        <ellipse cx="75" cy="53" rx="2.1" ry="2.7" fill="#6c63ff"/>
+        <path d="M43 44 Q45 41 47 45" stroke="#7a593d" stroke-width="2.2" fill="none" />
+        <path d="M73 44 Q75 41 77 45" stroke="#7a593d" stroke-width="2.2" fill="none" />
+        <ellipse cx="39" cy="63" rx="5" ry="2.2" fill="#ffd6d6" opacity="0.7"/>
+        <ellipse cx="81" cy="63" rx="5" ry="2.2" fill="#ffd6d6" opacity="0.7"/>
+        <circle cx="60" cy="140" r="8" fill="#fff" opacity="0.5"/>
+      </svg>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+      <div class="card-header">
+        <h1 class="title">Guess the number</h1>
+        <span class="badge">1 – 10</span>
+      </div>
+
+      <p class="subtitle">
+        Enter a number between <span>1</span> and <span>10</span>, then tap “Check”.
+      </p>
+
+      <div class="input-row">
+        <input id="tryy" type="number" min="1" max="10" placeholder="Your guess…" />
+        <button id="checkBtn" onclick="change()">Check</button>
+      </div>
+
+      <button id="resetBtn" type="button" onclick="resetGame()">Start new round</button>
+
+      <p id="result" class="result">Make your first guess to begin.</p>
+      <p id="hint" class="hint"></p>
+
+      <div class="footer">
+        <span class="pill">Instant feedback</span>
+        <span>Cartoon animation</span>
+        <span>Responsive design</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="site-footer">
+    All copyrights by Asick 2025
+  </div>
+
+  <script>
+    const tryy = document.getElementById("tryy");
+    const result = document.getElementById("result");
+    const hint = document.getElementById("hint");
+
+    function getRandomNumber() {
+      return Math.floor(Math.random() * 10) + 1;
+    }
+
+    let randomNumber = getRandomNumber();
+
+    function change() {
+      const enteredValue = tryy.value.trim();
+      const enterednumber = Number(enteredValue);
+
+      if (enteredValue === "" || isNaN(enterednumber) || enterednumber < 1 || enterednumber > 10) {
+        result.textContent = "Please enter a valid number from 1 to 10.";
+        result.className = "result error";
+        hint.textContent = "";
+        return;
+      }
+
+      if (enterednumber === randomNumber) {
+        result.textContent = "Right! 🎉 You guessed it.";
+        result.className = "result success";
+        hint.textContent = "Tap “Start new round” to play again.";
+      } else {
+        result.textContent = "Wrong ❌";
+        result.className = "result error";
+        hint.textContent = "The number was " + randomNumber + ". Try a new round!";
+      }
+
+      randomNumber = getRandomNumber();
+      tryy.value = "";
+      tryy.focus();
+    }
+
+    function resetGame() {
+      randomNumber = getRandomNumber();
+      tryy.value = "";
+      tryy.focus();
+      result.textContent = "New round started. Make a guess!";
+      result.className = "result";
+      hint.textContent = "";
+    }
+  </script>
+</body>
+</html>
